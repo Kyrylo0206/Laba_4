@@ -12,7 +12,7 @@ using namespace std;
 
 class Caesar {
 public:
-    Caesar(const char* dllmain);
+    Caesar(const char* lllllb4);
     ~Caesar();
     char* encrypt(const char* text, int key);
     char* decrypt(const char* text, int key);
@@ -26,19 +26,15 @@ private:
 };
 
 Caesar::Caesar(const char* lllllb4) {
-    HINSTANCE hModule = LoadLibrary(TEXT("lllllb4.dll"));
-    if (hModule == nullptr || hModule == INVALID_HANDLE_VALUE) {
-        cout << "Library not found\n";
+    hModule = LoadLibrary(TEXT("lllllb4.dll"));
+    if (!hModule) {
+        throw runtime_error("Library not found");
     }
     encryptFunc = (EncryptFunc)GetProcAddress(hModule, "encrypt");
     decryptFunc = (DecryptFunc)GetProcAddress(hModule, "decrypt");
-    if (!encryptFunc) {
+    if (!encryptFunc || !decryptFunc) {
         FreeLibrary(hModule);
-        throw runtime_error("Failed to get address of encrypt function");
-    }
-    if (!decryptFunc) {
-        FreeLibrary(hModule);
-        throw runtime_error("Failed to get address of decrypt function");
+        throw runtime_error("Failed to get address of encrypt or decrypt function");
     }
 }
 
@@ -80,11 +76,9 @@ private:
     void ensureCapacity();
 };
 
-TextStorage::TextStorage() {
-    capacity = INITIAL_CAPACITY;
-    totalLines = 0;
+TextStorage::TextStorage() : capacity(INITIAL_CAPACITY), totalLines(0) {
     text = (char**)malloc(capacity * sizeof(char*));
-    for (int i = 0; i < capacity; i++) {
+    for (int i = 0; i < capacity; ++i) {
         text[i] = (char*)malloc(BUFFER_SIZE * sizeof(char));
         text[i][0] = '\0';
     }
@@ -105,14 +99,14 @@ void TextStorage::appendText(const char* newText) {
 void TextStorage::newLine() {
     ensureCapacity();
     text[totalLines][0] = '\0';
-    totalLines + 1;
+    totalLines++;
 }
 
 void TextStorage::saveToFile(const char* filename) {
     FILE* file;
     errno_t err = fopen_s(&file, filename, "w");
     if (err != 0) {
-        std::cerr << "Could not open file for writing.\n";
+        cerr << "Could not open file for writing.\n";
         return;
     }
     for (int i = 0; i < totalLines; i++) {
@@ -125,7 +119,7 @@ void TextStorage::loadFromFile(const char* filename) {
     FILE* file;
     errno_t err = fopen_s(&file, filename, "r");
     if (err != 0) {
-        std::cerr << "Error opening file for reading.\n";
+        cerr << "Error opening file for reading.\n";
         return;
     }
     char line[BUFFER_SIZE];
@@ -138,17 +132,17 @@ void TextStorage::loadFromFile(const char* filename) {
 
 void TextStorage::printText() {
     for (int i = 0; i < totalLines; i++) {
-        std::cout << text[i] << std::endl;
+        cout << text[i] << endl;
     }
 }
 
 void TextStorage::insertText(int line, int index, const char* str) {
     if (line < 0 || line >= totalLines) {
-        std::cerr << "Invalid line number.\n";
+        cerr << "Invalid line number.\n";
         return;
     }
     if (index < 0 || index > strlen(text[line])) {
-        std::cerr << "Invalid index.\n";
+        cerr << "Invalid index.\n";
         return;
     }
     char buffer[BUFFER_SIZE];
@@ -161,11 +155,11 @@ void TextStorage::insertText(int line, int index, const char* str) {
 
 void TextStorage::deleteText(int line, int index, int length) {
     if (line < 0 || line >= totalLines) {
-        std::cerr << "Invalid line number.\n";
+        cerr << "Invalid line number.\n";
         return;
     }
     if (index < 0 || index > strlen(text[line])) {
-        std::cerr << "Invalid index.\n";
+        cerr << "Invalid index.\n";
         return;
     }
     memmove(&text[line][index], &text[line][index + length], strlen(&text[line][index + length]) + 1);
@@ -174,9 +168,9 @@ void TextStorage::deleteText(int line, int index, int length) {
 void TextStorage::searchText(const char* str) {
     for (int i = 0; i < totalLines; i++) {
         char* position = strstr(text[i], str);
-        while (position != NULL) {
+        while (position != nullptr) {
             int index = position - text[i];
-            std::cout << "Found on line " << i << ", index " << index << std::endl;
+            cout << "Found on line " << i << ", index " << index << endl;
             position = strstr(position + 1, str);
         }
     }
@@ -209,7 +203,7 @@ void TextStorage::ensureCapacity() {
         int newCapacity = capacity + INITIAL_CAPACITY;
         char** newText = (char**)realloc(text, newCapacity * sizeof(char*));
         if (!newText) {
-            std::cerr << "Failed to allocate more memory.\n";
+            cerr << "Failed to allocate more memory.\n";
             return;
         }
         for (int i = capacity; i < newCapacity; i++) {
@@ -433,8 +427,8 @@ public:
 private:
     TextStorage* textStorage;
     Caesar* caesarCipher;
-    std::stack<Command*> undoStack;
-    std::stack<Command*> redoStack;
+    stack<Command*> undoStack;
+    stack<Command*> redoStack;
     char clipboard[BUFFER_SIZE];
 
     void handleCommand(int command);
@@ -484,28 +478,28 @@ void TextEditor::run() {
     char filename[BUFFER_SIZE];
 
     while (true) {
-        std::cout << "\nText Editor Menu:\n"
-                  << "1. Append Text\n"
-                  << "2. New Line\n"
-                  << "3. Save to File\n"
-                  << "4. Load from File\n"
-                  << "5. Print Text\n"
-                  << "6. Insert Text\n"
-                  << "7. Delete Text\n"
-                  << "8. Search Text\n"
-                  << "9. Clear Console\n"
-                  << "10. Undo\n"
-                  << "11. Redo\n"
-                  << "12. Cut Text\n"
-                  << "13. Copy Text\n"
-                  << "14. Paste Text\n"
-                  << "15. Insert with Replacement\n"
-                  << "16. Encrypt File\n"
-                  << "17. Decrypt File\n"
-                  << "0. Exit\n"
-                  << "Enter command: ";
-        std::cin >> user_input;
-        std::cin.ignore();
+        cout << "\nText Editor Menu:\n"
+             << "1. Append Text\n"
+             << "2. New Line\n"
+             << "3. Save to File\n"
+             << "4. Load from File\n"
+             << "5. Print Text\n"
+             << "6. Insert Text\n"
+             << "7. Delete Text\n"
+             << "8. Search Text\n"
+             << "9. Clear Console\n"
+             << "10. Undo\n"
+             << "11. Redo\n"
+             << "12. Cut Text\n"
+             << "13. Copy Text\n"
+             << "14. Paste Text\n"
+             << "15. Insert with Replacement\n"
+             << "16. Encrypt File\n"
+             << "17. Decrypt File\n"
+             << "0. Exit\n"
+             << "Enter command: ";
+        cin >> user_input;
+        cin.ignore();
 
         if (user_input == 0) break;
 
@@ -520,43 +514,43 @@ void TextEditor::handleCommand(int command) {
 
     switch (command) {
         case 1:
-            std::cout << "Enter text to append: ";
-            std::cin.getline(inputBuffer, BUFFER_SIZE);
+            cout << "Enter text to append: ";
+            cin.getline(inputBuffer, BUFFER_SIZE);
             appendText(inputBuffer);
             break;
         case 2:
             newLine();
             break;
         case 3:
-            std::cout << "Enter the file name for saving: ";
-            std::cin.getline(filename, BUFFER_SIZE);
+            cout << "Enter the file name for saving: ";
+            cin.getline(filename, BUFFER_SIZE);
             saveToFile(filename);
             break;
         case 4:
-            std::cout << "Enter the file name for loading: ";
-            std::cin.getline(filename, BUFFER_SIZE);
+            cout << "Enter the file name for loading: ";
+            cin.getline(filename, BUFFER_SIZE);
             loadFromFile(filename);
             break;
         case 5:
             printText();
             break;
         case 6:
-            std::cout << "Enter line and index: ";
-            std::cin >> line >> index;
-            std::cin.ignore();
-            std::cout << "Enter text to insert: ";
-            std::cin.getline(inputBuffer, BUFFER_SIZE);
+            cout << "Enter line and index: ";
+            cin >> line >> index;
+            cin.ignore();
+            cout << "Enter text to insert: ";
+            cin.getline(inputBuffer, BUFFER_SIZE);
             insertText(line, index, inputBuffer);
             break;
         case 7:
-            std::cout << "Enter text to search: ";
-            std::cin.getline(inputBuffer, BUFFER_SIZE);
+            cout << "Enter text to search: ";
+            cin.getline(inputBuffer, BUFFER_SIZE);
             searchText(inputBuffer);
             break;
         case 8:
-            std::cout << "Enter line, index and length: ";
-            std::cin >> line >> index >> length;
-            std::cin.ignore();
+            cout << "Enter line, index and length: ";
+            cin >> line >> index >> length;
+            cin.ignore();
             deleteText(line, index, length);
             break;
         case 9:
@@ -569,45 +563,45 @@ void TextEditor::handleCommand(int command) {
             redo();
             break;
         case 12:
-            std::cout << "Enter line, index and length for cut: ";
-            std::cin >> line >> index >> length;
-            std::cin.ignore();
+            cout << "Enter line, index and length for cut: ";
+            cin >> line >> index >> length;
+            cin.ignore();
             cutText(line, index, length);
             break;
         case 13:
-            std::cout << "Enter line, index and length for copy: ";
-            std::cin >> line >> index >> length;
-            std::cin.ignore();
+            cout << "Enter line, index and length for copy: ";
+            cin >> line >> index >> length;
+            cin.ignore();
             copyText(line, index, length);
             break;
         case 14:
-            std::cout << "Enter line and index for paste: ";
-            std::cin >> line >> index;
-            std::cin.ignore();
+            cout << "Enter line and index for paste: ";
+            cin >> line >> index;
+            cin.ignore();
             pasteText(line, index);
             break;
         case 15:
-            std::cout << "Enter line and index for replacement: ";
-            std::cin >> line >> index;
-            std::cin.ignore();
-            std::cout << "Enter new text: ";
-            std::cin.getline(inputBuffer, BUFFER_SIZE);
+            cout << "Enter line and index for replacement: ";
+            cin >> line >> index;
+            cin.ignore();
+            cout << "Enter new text: ";
+            cin.getline(inputBuffer, BUFFER_SIZE);
             insertReplaceText(line, index, inputBuffer);
             break;
         case 16:
-            std::cout << "Enter input file, output file and key for encryption: ";
-            std::cin >> filename >> inputBuffer >> key;
-            std::cin.ignore();
+            cout << "Enter input file, output file and key for encryption: ";
+            cin >> filename >> inputBuffer >> key;
+            cin.ignore();
             encryptFile(filename, inputBuffer, key);
             break;
         case 17:
-            std::cout << "Enter input file, output file and key for decryption: ";
-            std::cin >> filename >> inputBuffer >> key;
-            std::cin.ignore();
+            cout << "Enter input file, output file and key for decryption: ";
+            cin >> filename >> inputBuffer >> key;
+            cin.ignore();
             decryptFile(filename, inputBuffer, key);
             break;
         default:
-            std::cout << "Invalid command.\n";
+            cout << "Invalid command.\n";
             break;
     }
 }
@@ -724,7 +718,7 @@ void TextEditor::encryptFile(const char* inputFile, const char* outputFile, int 
     FILE* file;
     errno_t err = fopen_s(&file, outputFile, "w");
     if (err != 0) {
-        std::cerr << "Could not open file for writing.\n";
+        cerr << "Could not open file for writing.\n";
         return;
     }
     fprintf(file, "%s", encryptedText);
@@ -733,12 +727,12 @@ void TextEditor::encryptFile(const char* inputFile, const char* outputFile, int 
 
 void TextEditor::decryptFile(const char* inputFile, const char* outputFile, int key) {
     textStorage->loadFromFile(inputFile);
-    char* text = textStorage->getText(0);
+    char* text = textStorage->getText(1);
     char* decryptedText = caesarCipher->decrypt(text, key);
     FILE* file;
     errno_t err = fopen_s(&file, outputFile, "w");
     if (err != 0) {
-        std::cerr << "Could not open file for writing.\n";
+        cerr << "Could not open file for writing.\n";
         return;
     }
     fprintf(file, "%s", decryptedText);
