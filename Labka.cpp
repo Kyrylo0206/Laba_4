@@ -14,8 +14,8 @@ class Caesar {
 public:
     Caesar(const char* lllllb4);
     ~Caesar();
-    char* encrypt(const char* text, int key);
-    char* decrypt(const char* text, int key);
+    char* encrypt(char* text, int key);
+    char* decrypt(char* text, int key);
 
 private:
     HMODULE hModule;
@@ -44,12 +44,12 @@ Caesar::~Caesar() {
     }
 }
 
-char* Caesar::encrypt(const char* text, int key) {
-    return encryptFunc((char*)text, key);
+char* Caesar::encrypt(char* text, int key) {
+    return encryptFunc(text, key);
 }
 
-char* Caesar::decrypt(const char* text, int key) {
-    return decryptFunc((char*)text, key);
+char* Caesar::decrypt(char* text, int key) {
+    return decryptFunc(text, key);
 }
 
 class TextStorage {
@@ -67,6 +67,7 @@ public:
     void clearConsole();
     void freeTextStorage();
     char* getText(int line);
+    int getTotalLines() const;
 
 private:
     char** text;
@@ -196,6 +197,10 @@ char* TextStorage::getText(int line) {
         return nullptr;
     }
     return text[line];
+}
+
+int TextStorage::getTotalLines() const {
+    return totalLines;
 }
 
 void TextStorage::ensureCapacity() {
@@ -713,29 +718,37 @@ void TextEditor::freeTextStorage() {
 
 void TextEditor::encryptFile(const char* inputFile, const char* outputFile, int key) {
     textStorage->loadFromFile(inputFile);
-    char* text = textStorage->getText(0);
-    char* encryptedText = caesarCipher->encrypt(text, key);
     FILE* file;
     errno_t err = fopen_s(&file, outputFile, "w");
     if (err != 0) {
         cerr << "Could not open file for writing.\n";
         return;
     }
-    fprintf(file, "%s", encryptedText);
+
+    for (int i = 0; i < textStorage->getTotalLines(); i++) {
+        char* text = textStorage->getText(i);
+        char* encryptedText = caesarCipher->encrypt(text, key);
+        fprintf(file, "%s\n", encryptedText);
+    }
+
     fclose(file);
 }
 
 void TextEditor::decryptFile(const char* inputFile, const char* outputFile, int key) {
     textStorage->loadFromFile(inputFile);
-    char* text = textStorage->getText(1);
-    char* decryptedText = caesarCipher->decrypt(text, key);
     FILE* file;
     errno_t err = fopen_s(&file, outputFile, "w");
     if (err != 0) {
         cerr << "Could not open file for writing.\n";
         return;
     }
-    fprintf(file, "%s", decryptedText);
+
+    for (int i = 0; i < textStorage->getTotalLines(); i++) {
+        char* text = textStorage->getText(i);
+        char* decryptedText = caesarCipher->decrypt(text, key);
+        fprintf(file, "%s\n", decryptedText);
+    }
+
     fclose(file);
 }
 
